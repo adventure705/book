@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>터지는 기승전결 구조 10선 - 인터랙티브 랩</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #fdfbf7; /* Warm neutral background */
+            color: #2d3748;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 350px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        .step-card {
+            transition: all 0.3s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .structure-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .structure-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .structure-card.active {
+            border-color: #d97706; /* Amber-600 */
+            background-color: #fffbeb; /* Amber-50 */
+        }
+
+        /* Custom Scrollbar for the list */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Base: #fdfbf7) with Amber/Orange accents for energy and Slate for text. 
+         Rationale: Creates a calm, reading-focused environment while highlighting the "explosive" nature of the content with warm accents. -->
+    
+    <!-- Application Structure Plan: 
+         1. Hero Section: Clear title and purpose.
+         2. Main Workspace (Split View): 
+            - Top/Left: "Analysis Lab" showing the details of the CURRENTLY selected structure (Flow + Chart).
+            - Bottom/Right: "Library" grid of all 10 structures for navigation.
+         3. Interactions:
+            - Filtering the grid by category (Twist, Survival, Info).
+            - Clicking a card updates the Analysis Lab immediately.
+            - Visual Step Flow: Clearly delineates Ki-Seung-Jeon-Kyeol.
+         Rationale: This Master-Detail view allows users to browse the collection while maintaining focus on studying one structure at a time. 
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Radar Chart: To visualize the abstract "feel" of each story structure (Tension, Utility, Twist, Empathy, Shock). 
+            - Goal: Compare. 
+            - Interaction: Updates on card click.
+         2. Step-by-Step Flow: Visual vertical/horizontal timeline for Ki-Seung-Jeon-Kyeol.
+            - Goal: Inform/Organize.
+            - Justification: Text alone is hard to parse; spatial arrangement shows progression.
+         3. Filter Tags: Quick buttons to sort the 10 items.
+            - Goal: Organize.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">💥</span>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 leading-tight">터지는 기승전결 구조 10선</h1>
+                    <p class="text-sm text-gray-500">콘텐츠 흡입력 강화 패턴 분석 랩</p>
+                </div>
+            </div>
+            <button id="reset-btn" class="text-sm text-gray-500 hover:text-amber-600 underline hidden sm:block">초기화</button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col lg:flex-row gap-8">
+        
+        <!-- Left Column: The Analysis Lab (Detail View) -->
+        <section class="w-full lg:w-5/12 xl:w-1/3 flex flex-col gap-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
+            
+            <!-- Intro Box -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-lg font-semibold mb-2 text-gray-800">📊 구조 분석실</h2>
+                <p class="text-sm text-gray-600 mb-4">
+                    아래 리스트에서 구조를 선택하면 상세 흐름과 
+                    <span class="font-bold text-amber-600">콘텐츠 DNA(특징)</span>를 분석해 드립니다.
+                    내 소재에 맞는 최적의 프레임워크를 찾아보세요.
+                </p>
+            </div>
+
+            <!-- Detail Display Area -->
+            <div id="detail-view" class="bg-white rounded-xl shadow-lg border border-amber-100 overflow-hidden transition-all duration-300">
+                <!-- Header of Detail -->
+                <div class="bg-amber-50 p-6 border-b border-amber-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <span id="detail-id" class="text-xs font-bold bg-amber-200 text-amber-800 px-2 py-1 rounded">NO. 001</span>
+                        <span id="detail-icon" class="text-3xl">💰</span>
+                    </div>
+                    <h2 id="detail-title" class="text-2xl font-bold text-gray-900 mb-1">욕망 폭발형</h2>
+                    <p id="detail-features" class="text-sm text-gray-600 italic">욕망 + 반전 + 유머</p>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="p-6 bg-white">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 text-center">Structural DNA Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="structureRadar"></canvas>
+                    </div>
+                </div>
+
+                <!-- Story Flow Timeline -->
+                <div class="p-6 bg-gray-50 border-t border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center">
+                        <span class="mr-2">📝</span> 전개 흐름 (Flow)
+                    </h3>
+                    <div class="space-y-4 relative">
+                        <!-- Connecting Line -->
+                        <div class="absolute left-3.5 top-2 bottom-4 w-0.5 bg-gray-200 -z-10"></div>
+
+                        <!-- Ki -->
+                        <div class="flex items-start group">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm z-0">기</div>
+                            <div class="ml-4 flex-grow">
+                                <span class="text-xs text-blue-600 font-bold block mb-0.5">문제 제기</span>
+                                <p id="detail-ki" class="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm border border-gray-100">자극적인 욕망 제시 (돈/성/권력 등)</p>
+                            </div>
+                        </div>
+
+                        <!-- Seung -->
+                        <div class="flex items-start group">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm z-0">승</div>
+                            <div class="ml-4 flex-grow">
+                                <span class="text-xs text-yellow-600 font-bold block mb-0.5">예상 밖 전개</span>
+                                <p id="detail-seung" class="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm border border-gray-100">점점 수상한 흐름</p>
+                            </div>
+                        </div>
+
+                        <!-- Jeon -->
+                        <div class="flex items-start group">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm z-0">전</div>
+                            <div class="ml-4 flex-grow">
+                                <span class="text-xs text-red-600 font-bold block mb-0.5">몰입/긴장</span>
+                                <p id="detail-jeon" class="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm border border-gray-100 font-medium">갑작스러운 반전 상황</p>
+                            </div>
+                        </div>
+
+                        <!-- Kyeol -->
+                        <div class="flex items-start group">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm z-0">결</div>
+                            <div class="ml-4 flex-grow">
+                                <span class="text-xs text-green-600 font-bold block mb-0.5">결론/인사이트</span>
+                                <p id="detail-kyeol" class="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm border border-gray-100">허무 or 반전 결말</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: The Library (Grid List) -->
+        <section class="w-full lg:w-7/12 xl:w-2/3 order-2 lg:order-1">
+            
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">구조 라이브러리</h2>
+                <p class="text-gray-600 mb-4 text-sm sm:text-base">원하는 콘텐츠 성격에 맞는 필터를 선택하여 구조를 탐색하세요.</p>
+                
+                <!-- Filters -->
+                <div class="flex flex-col gap-4" id="filter-container">
+                    
+                    <!-- 1. Major Category Filters (대분류) -->
+                    <div class="flex flex-wrap gap-2">
+                        <button class="filter-btn active px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-800 text-white hover:bg-gray-700" data-filter="all">전체 보기</button>
+                        <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:border-pink-500 hover:text-pink-600" data-filter="emotion-category">❤️ 감정 몰입형</button>
+                        <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:border-teal-500 hover:text-teal-600" data-filter="info-category">📚 정보 전달형</button>
+                    </div>
+
+                    <!-- 2. Fine-Grained Filters (미세 필터) -->
+                    <div class="flex flex-wrap gap-2">
+                        <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:border-amber-500 hover:text-amber-600" data-filter="twist">🌀 반전/충격</button>
+                        <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:border-blue-500 hover:text-blue-600" data-filter="info">💡 정보/실용</button>
+                        <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:border-red-500 hover:text-red-600" data-filter="tension">🔥 긴장/공포</button>
+                        <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:border-green-500 hover:text-green-600" data-filter="emotion">💖 공감/감동</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid -->
+            <div id="grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Cards will be injected here via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm">데이터 출처: 터지는 기승전결 구조 10선 리포트</p>
+            <p class="text-xs text-gray-500 mt-2">© 2025 Interactive Storytelling Lab.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA SOURCE ---
+        const storyStructures = [
+            {
+                id: '001',
+                name: '욕망 폭발형',
+                icon: '💰',
+                ki: '자극적인 욕망 제시 (돈/성/권력 등)',
+                seung: '점점 수상한 흐름',
+                jeon: '갑작스러운 반전 상황',
+                kyeol: '허무 or 반전 결말',
+                features: '욕망 + 반전 + 유머',
+                tags: ['twist', 'tension'],
+                category: 'emotion', /* New Category: emotion */
+                metrics: { tension: 8, utility: 2, twist: 10, empathy: 3, horror: 5 }
+            },
+            {
+                id: '002',
+                name: '일상 속 꿀팁형',
+                icon: '💡',
+                ki: '일상적인 상황의 시작',
+                seung: '일반과 다른 해결 시도',
+                jeon: '낯선 과정·기술 등장',
+                kyeol: '실용 꿀팁 or 놀라운 정리',
+                features: '실용 + 팁 + 공감',
+                tags: ['info', 'emotion'],
+                category: 'info', /* New Category: info */
+                metrics: { tension: 2, utility: 10, twist: 4, empathy: 9, horror: 0 }
+            },
+            {
+                id: '003',
+                name: '극한 생존 경고형',
+                icon: '🚨',
+                ki: '위험하거나 위태로운 상황 진입',
+                seung: '점점 심해지는 도전',
+                jeon: '실제 위기 or 실패 위협',
+                kyeol: '생존법 or 실패 사례',
+                features: '생존 + 몰입 + 경고',
+                tags: ['tension', 'info'],
+                category: 'emotion', /* New Category: emotion */
+                metrics: { tension: 10, utility: 8, twist: 3, empathy: 5, horror: 7 }
+            },
+            {
+                id: '004',
+                name: '편견 타파형',
+                icon: '🌍',
+                ki: '문화적 오해 또는 충돌',
+                seung: '타 문화 관습 등장',
+                jeon: '이해 과정에서 편견 깨짐',
+                kyeol: '인사이트 or 감동 결론',
+                features: '문화 + 인식 전환',
+                tags: ['emotion', 'info'],
+                category: 'info', /* New Category: info (Changed based on user's image classification) */
+                metrics: { tension: 4, utility: 6, twist: 6, empathy: 10, horror: 1 }
+            },
+            {
+                id: '005',
+                name: '구조물 미스터리형',
+                icon: '⚙️',
+                ki: '비정상적 행동 or 이상한 구조 노출',
+                seung: '구조 or 원인 분석',
+                jeon: '몰입되는 과정 or 시각 변화',
+                kyeol: '결국 놀라운 진실 발견',
+                features: '건축/기계 + 반전',
+                tags: ['twist', 'tension'],
+                category: 'info', /* New Category: info (Changed based on user's image classification) */
+                metrics: { tension: 7, utility: 4, twist: 9, empathy: 2, horror: 4 }
+            },
+            {
+                id: '006',
+                name: '실체 폭로형',
+                icon: '🛡️',
+                ki: '겉보기엔 멀쩡한 대상',
+                seung: '속 내용 파헤치기',
+                jeon: '충격적인 실체 발견',
+                kyeol: '진실 or 소비자 경고',
+                features: '사기 + 소비자 정보',
+                tags: ['info', 'twist'],
+                category: 'emotion', /* New Category: emotion (Changed based on user's image classification) */
+                metrics: { tension: 6, utility: 9, twist: 8, empathy: 6, horror: 2 }
+            },
+            {
+                id: '007',
+                name: '불가능 도전형',
+                icon: '🚀',
+                ki: '도저히 성공 못할 미션 제시',
+                seung: '이상한 방식으로 도전',
+                jeon: '점점 극한에 몰리는 상황',
+                kyeol: '성공 or 실패 통한 교훈',
+                features: '몰입 + 감정 + 도전',
+                tags: ['tension', 'emotion'],
+                category: 'info', /* New Category: info (Changed based on user's image classification) */
+                metrics: { tension: 9, utility: 3, twist: 5, empathy: 8, horror: 3 }
+            },
+            {
+                id: '008',
+                name: '자연 극한 생존형',
+                icon: '🌿',
+                ki: '자연 속 극한 상황 연출',
+                seung: '살아남기 위한 시도',
+                jeon: '의외의 변수 등장',
+                kyeol: '실제 생존 기술 공유',
+                features: '자연 + 긴장 + 실용',
+                tags: ['tension', 'info'],
+                category: 'info', /* New Category: info */
+                metrics: { tension: 9, utility: 9, twist: 4, empathy: 4, horror: 6 }
+            },
+            {
+                id: '009',
+                name: '장소 미스터리 공포형',
+                icon: '👻',
+                ki: '흔한 장소 or 구조물 소개',
+                seung: '이상한 디테일 포착',
+                jeon: '깊이 들어갈수록 불안 증폭',
+                kyeol: '붕괴 or 충격 결말',
+                features: '위기 + 구조물 + 공포',
+                tags: ['tension', 'twist'],
+                category: 'emotion', /* New Category: emotion */
+                metrics: { tension: 10, utility: 1, twist: 8, empathy: 2, horror: 10 }
+            },
+            {
+                id: '010',
+                name: '진실 검증 반전형',
+                icon: '⚖️',
+                ki: '‘진짜일까?’라는 의심 유도',
+                seung: '실험 or 분석으로 증명',
+                jeon: '반전이 드러나는 순간',
+                kyeol: '허세 vs 실속 정리',
+                features: '과장 광고 + 반전 비교',
+                tags: ['twist', 'info'],
+                category: 'info', /* New Category: info */
+                metrics: { tension: 5, utility: 8, twist: 9, empathy: 5, horror: 0 }
+            }
+        ];
+
+        // --- STATE & VARIABLES ---
+        let currentStructure = storyStructures[0];
+        let currentFilter = 'all';
+        let radarChart = null;
+
+        // --- DOM ELEMENTS ---
+        const gridContainer = document.getElementById('grid-container');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Detail Elements
+        const detailId = document.getElementById('detail-id');
+        const detailIcon = document.getElementById('detail-icon');
+        const detailTitle = document.getElementById('detail-title');
+        const detailFeatures = document.getElementById('detail-features');
+        const detailKi = document.getElementById('detail-ki');
+        const detailSeung = document.getElementById('detail-seung');
+        const detailJeon = document.getElementById('detail-jeon');
+        const detailKyeol = document.getElementById('detail-kyeol');
+
+        // --- FUNCTIONS ---
+
+        // 1. Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('structureRadar').getContext('2d');
+            
+            // Register plugin to draw background color if needed, but Chart.js radar has fill
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['긴장감 (Tension)', '실용성 (Utility)', '반전 (Twist)', '공감 (Empathy)', '자극/공포 (Stimulation)'],
+                    datasets: [{
+                        label: '콘텐츠 성향 분석',
+                        data: [0, 0, 0, 0, 0], // Initial dummy data
+                        backgroundColor: 'rgba(217, 119, 6, 0.2)', // Amber-600 with opacity
+                        borderColor: 'rgba(217, 119, 6, 1)',
+                        pointBackgroundColor: 'rgba(217, 119, 6, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(217, 119, 6, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 10,
+                            ticks: {
+                                stepSize: 2,
+                                backdropColor: 'transparent',
+                                display: false // Hide numbers for cleaner look
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12,
+                                    family: "'Noto Sans KR', sans-serif",
+                                    weight: 'bold'
+                                },
+                                color: '#4b5563'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 10,
+                            cornerRadius: 4,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.raw + '/10';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Update Detail View
+        function updateDetail(structure) {
+            currentStructure = structure;
+            
+            // Animate transition (simple opacity fade effect logic could be added here, doing direct replacement for responsiveness)
+            
+            // Text Content
+            detailId.textContent = `NO. ${structure.id}`;
+            detailIcon.textContent = structure.icon;
+            detailTitle.textContent = structure.name;
+            detailFeatures.textContent = structure.features;
+            
+            detailKi.textContent = structure.ki;
+            detailSeung.textContent = structure.seung;
+            detailJeon.textContent = structure.jeon;
+            detailKyeol.textContent = structure.kyeol;
+
+            // Highlight Active Card
+            document.querySelectorAll('.structure-card').forEach(card => {
+                if(card.dataset.id === structure.id) {
+                    card.classList.add('active', 'border-amber-500', 'ring-2', 'ring-amber-200');
+                    card.classList.remove('border-transparent');
+                } else {
+                    card.classList.remove('active', 'border-amber-500', 'ring-2', 'ring-amber-200');
+                    card.classList.add('border-transparent');
+                }
+            });
+
+            // Update Chart
+            if (radarChart) {
+                radarChart.data.datasets[0].data = [
+                    structure.metrics.tension,
+                    structure.metrics.utility,
+                    structure.metrics.twist,
+                    structure.metrics.empathy,
+                    structure.metrics.horror
+                ];
+                radarChart.update();
+            }
+            
+            // Scroll to top on mobile only if needed (optional)
+            if (window.innerWidth < 1024) {
+                 // document.getElementById('detail-view').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 3. Render Grid
+        function renderGrid(filter = 'all') {
+            gridContainer.innerHTML = '';
+            
+            let filteredData;
+
+            if (filter === 'all') {
+                filteredData = storyStructures;
+            } else if (filter === 'emotion-category' || filter === 'info-category') {
+                const category = filter.split('-')[0];
+                filteredData = storyStructures.filter(s => s.category === category);
+            } else { // Existing tags (twist, info, tension, emotion)
+                filteredData = storyStructures.filter(s => s.tags.includes(filter));
+            }
+
+            if (filteredData.length === 0) {
+                gridContainer.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">해당하는 구조가 없습니다.</div>';
+                return;
+            }
+
+            filteredData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `structure-card bg-white p-5 rounded-lg shadow-sm border border-transparent hover:border-amber-300 relative`;
+                card.dataset.id = item.id;
+                
+                // Active state check
+                if (item.id === currentStructure.id) {
+                    card.classList.add('active', 'border-amber-500', 'ring-2', 'ring-amber-200');
+                    card.classList.remove('border-transparent');
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">${item.icon}</span>
+                            <div>
+                                <span class="text-xs font-bold text-gray-400">NO. ${item.id}</span>
+                                <h3 class="font-bold text-gray-800 text-lg leading-none">${item.name}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 line-clamp-2 mb-3 h-10">${item.features}</p>
+                    <div class="flex gap-1 flex-wrap">
+                         <span class="text-xs px-2 py-1 rounded-full ${item.category === 'emotion' ? 'bg-pink-100 text-pink-700' : 'bg-teal-100 text-teal-700'}">#${item.category === 'emotion' ? '감정몰입' : '정보전달'}</span>
+                         ${item.tags.map(tag => {
+                             let colorClass = 'bg-gray-100 text-gray-600';
+                             if(tag === 'twist') colorClass = 'bg-purple-50 text-purple-600';
+                             if(tag === 'info') colorClass = 'bg-blue-50 text-blue-600';
+                             if(tag === 'tension') colorClass = 'bg-red-50 text-red-600';
+                             if(tag === 'emotion') colorClass = 'bg-green-50 text-green-600';
+                             return `<span class="text-xs px-2 py-1 rounded-full ${colorClass}">#${getTagLabel(tag)}</span>`
+                         }).join('')}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => updateDetail(item));
+                gridContainer.appendChild(card);
+            });
+        }
+
+        // Helper for tags
+        function getTagLabel(tag) {
+            const labels = {
+                twist: '반전',
+                info: '정보',
+                tension: '긴장',
+                emotion: '감동'
+            };
+            return labels[tag] || tag;
+        }
+
+        // 4. Filter Logic
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // UI Update for ALL buttons
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-gray-800', 'text-white');
+                    b.classList.add('bg-white', 'text-gray-600');
+                    // Remove specific hover styles for active state
+                    b.classList.remove('hover:border-pink-500', 'hover:text-pink-600', 'hover:border-teal-500', 'hover:text-teal-600', 'hover:border-amber-500', 'hover:text-amber-600', 'hover:border-blue-500', 'hover:text-blue-600', 'hover:border-red-500', 'hover:text-red-600', 'hover:border-green-500', 'hover:text-green-600');
+                    if (b.dataset.filter === 'emotion-category') b.classList.add('hover:border-pink-500', 'hover:text-pink-600');
+                    else if (b.dataset.filter === 'info-category') b.classList.add('hover:border-teal-500', 'hover:text-teal-600');
+                    else if (b.dataset.filter === 'twist') b.classList.add('hover:border-amber-500', 'hover:text-amber-600');
+                    else if (b.dataset.filter === 'info') b.classList.add('hover:border-blue-500', 'hover:text-blue-600');
+                    else if (b.dataset.filter === 'tension') b.classList.add('hover:border-red-500', 'hover:text-red-600');
+                    else if (b.dataset.filter === 'emotion') b.classList.add('hover:border-green-500', 'hover:text-green-600');
+                    else if (b.dataset.filter === 'all') b.classList.add('hover:bg-gray-700');
+                });
+                
+                // Set active style
+                e.target.classList.remove('bg-white', 'text-gray-600');
+                e.target.classList.add('bg-gray-800', 'text-white');
+
+                // Logic Update
+                currentFilter = e.target.dataset.filter;
+                renderGrid(currentFilter);
+            });
+        });
+
+        // 5. Reset
+        if(resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                currentFilter = 'all';
+                updateDetail(storyStructures[0]);
+                
+                // Reset buttons UI
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-gray-800', 'text-white');
+                    b.classList.add('bg-white', 'text-gray-600');
+                    
+                    if (b.dataset.filter === 'all') {
+                        b.classList.add('bg-gray-800', 'text-white');
+                        b.classList.remove('bg-white', 'text-gray-600');
+                    }
+                });
+                
+                renderGrid('all');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            renderGrid();
+            updateDetail(storyStructures[0]); // Load first item
+        });
+
+    </script>
+</body>
+</html>

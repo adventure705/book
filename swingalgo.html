@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유튜브 알고리즘 심폐소생술 | 스윙슈터 실전 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 
+    RESTRICTED PALETTE (Max 4 Core Colors):
+    1. Primary (Deep Navy): #1E3A8A (Text, Main Elements, Good Data)
+    2. Highlight (Vivid Orange): #F97316 (Action, Warning, Bad Data)
+    3. Background (Soft Grey-Blue): #F1F5F9 (Page Background)
+    4. Surface (White): #FFFFFF (Card Backgrounds)
+    -->
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E3A8A',   // Deep Navy
+                        highlight: '#F97316', // Vivid Orange
+                        background: '#F1F5F9', // Soft Grey-Blue
+                        surface: '#FFFFFF',    // White
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #F1F5F9;
+            color: #1E3A8A;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* 인쇄 시 버튼 숨김 및 레이아웃 조정 */
+        @media print {
+            .print\:hidden {
+                display: none !important;
+            }
+            body {
+                background-color: white;
+            }
+            .chart-container {
+                break-inside: avoid;
+            }
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background text-primary">
+
+    <!-- Header Section -->
+    <header class="bg-primary text-white py-12 px-4 shadow-lg relative print:bg-primary print:text-white">
+        <!-- PDF/Print Button (Absolute Position Top Right) -->
+        <div class="absolute top-4 right-4 md:top-8 md:right-8 print:hidden">
+            <button onclick="window.print()" class="bg-white text-primary font-bold py-2 px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer text-sm md:text-base">
+                🖨️ PDF 저장 / 인쇄
+            </button>
+        </div>
+
+        <div class="max-w-6xl mx-auto text-center">
+            <div class="inline-block bg-highlight text-white px-4 py-1 rounded-full text-sm font-bold mb-4">
+                🎉 구독자 1만 달성 기념
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">유튜브 알고리즘<br/>심폐소생 실전 가이드</h1>
+            <p class="text-lg md:text-xl text-blue-100 max-w-3xl mx-auto mt-4 font-medium">
+                잘 나가던 '효자 영상'이 죽었을 때,<br/>데이터 분석을 통한 원인 파악 및 해결 과정 정리
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12 space-y-16">
+
+        <!-- SECTION 1: THE CRISIS -->
+        <section>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <h2 class="text-3xl font-bold border-l-8 border-highlight pl-4">🚨 위기 발생: 노출 급감</h2>
+                    <p class="text-lg font-medium leading-relaxed opacity-90">
+                        200만~300만 조회수 견인하던 <strong>[영상 A]</strong> 정지.<br>
+                        단순 하락이 아닌, 시간당 4만 → 2천으로 <strong>1/20 토막</strong>.<br>
+                        다른 영상(E, F) 업로드 1시간 후 발생.
+                    </p>
+                    <div class="bg-white p-6 rounded-lg card-shadow border-t-4 border-highlight">
+                        <h3 class="font-bold text-lg mb-3">📉 주요 증상 확인</h3>
+                        <ul class="list-disc list-inside space-y-2 text-sm md:text-base font-medium">
+                            <li>잘 나가던 영상 피드 노출 즉시 중단</li>
+                            <li>시간당 조회수 40,000 → 4,000 → 2,000 급락</li>
+                            <li>특정 영상(F) 업로드 직후 현상 발생</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-shadow">
+                    <h3 class="text-center font-bold mb-4 opacity-70">시간당 조회수 추락 (Crisis Flow)</h3>
+                    <div class="chart-container">
+                        <canvas id="crashChart"></canvas>
+                    </div>
+                    <p class="text-center text-xs opacity-60 mt-2">시간 경과에 따른 하락세 시각화</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: DIAGNOSIS - COMMENTS -->
+        <section class="bg-white rounded-xl p-8 card-shadow">
+            <h2 class="text-3xl font-bold mb-6">🔍 진단 1: 댓글 관리</h2>
+            <p class="text-lg mb-8 font-medium opacity-90">
+                알고리즘은 댓글창 분위기와 채널 주인 반응을 평가함.<br>
+                무지성 이모지 답글이나 악플 반응은 '부정적 신호'로 작용.
+            </p>
+
+            <div class="space-y-6">
+                <!-- Comparison Row 1 -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+                    <!-- Bad Practice 1 -->
+                    <div class="flex-1 border-2 border-highlight bg-orange-50 rounded-lg p-5 text-center flex flex-col justify-between">
+                        <div>
+                            <div class="text-3xl mb-3">🤬</div>
+                            <h3 class="font-bold text-highlight mb-2">선정적/부정적 댓글</h3>
+                            <p class="text-sm opacity-80 mb-3">"악플도 반응이다"라며<br>하트(❤️) 주거나 방치.</p>
+                        </div>
+                        <div class="mt-auto">
+                            <span class="bg-highlight text-white px-3 py-1 rounded font-bold text-xs inline-block">BEFORE</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div class="hidden md:flex justify-center items-center px-2">
+                        <div class="text-3xl opacity-20">➡️</div>
+                    </div>
+
+                    <!-- Good Practice 1 -->
+                    <div class="flex-1 border-2 border-primary bg-blue-50 rounded-lg p-5 text-center flex flex-col justify-between">
+                        <div>
+                            <div class="text-3xl mb-3">🛡️</div>
+                            <h3 class="font-bold text-primary mb-2">숨기기 & 무반응</h3>
+                            <p class="text-sm opacity-80 mb-3">적을 만들지 않고 조용히 '숨기기'.<br>악플 무대응 원칙.</p>
+                        </div>
+                        <div class="mt-auto">
+                            <span class="bg-primary text-white px-3 py-1 rounded font-bold text-xs inline-block">AFTER</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Comparison Row 2 -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+                     <!-- Bad Practice 2 -->
+                     <div class="flex-1 border-2 border-highlight bg-orange-50 rounded-lg p-5 text-center flex flex-col justify-between">
+                        <div>
+                            <div class="text-3xl mb-3">👍</div>
+                            <h3 class="font-bold text-highlight mb-2">이모지 "복붙"</h3>
+                            <p class="text-sm opacity-80 mb-3">귀찮아서 👍, 😁만 반복.<br>스팸/저품질 참여로 인식.</p>
+                        </div>
+                        <div class="mt-auto">
+                            <span class="bg-highlight text-white px-3 py-1 rounded font-bold text-xs inline-block">BEFORE</span>
+                        </div>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="hidden md:flex justify-center items-center px-2">
+                        <div class="text-3xl opacity-20">➡️</div>
+                    </div>
+
+                    <!-- Good Practice 2 -->
+                    <div class="flex-1 border-2 border-primary bg-blue-50 rounded-lg p-5 text-center flex flex-col justify-between">
+                        <div>
+                            <div class="text-3xl mb-3">📝</div>
+                            <h3 class="font-bold text-primary mb-2">텍스트 답글</h3>
+                            <p class="text-sm opacity-80 mb-3">짧더라도 <strong>글자</strong> 입력.<br>"감사합니다!" 등 정성 표현.</p>
+                        </div>
+                        <div class="mt-auto">
+                            <span class="bg-primary text-white px-3 py-1 rounded font-bold text-xs inline-block">AFTER</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: DIAGNOSIS - ALIGNMENT -->
+        <section>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="order-2 md:order-1 bg-white p-6 rounded-lg card-shadow">
+                    <h3 class="text-center font-bold mb-4 opacity-70">주제 일치도 vs 조회수 퍼포먼스</h3>
+                    <div class="chart-container">
+                        <canvas id="alignmentChart"></canvas>
+                    </div>
+                    <p class="text-center text-xs opacity-60 mt-2">결이 다른 영상(Orange)이 채널 타겟팅 교란</p>
+                </div>
+                <div class="order-1 md:order-2 space-y-4">
+                    <h2 class="text-3xl font-bold border-l-8 border-highlight pl-4">🔗 진단 2: '결'의 불일치</h2>
+                    <p class="text-lg font-medium leading-relaxed opacity-90">
+                        핵심 원인: <strong>'결이 다른 영상'</strong> 업로드.<br>
+                        효자 영상(A)과 주제가 다른 E, F가 올라오자 알고리즘 혼란 발생.
+                    </p>
+                    <div class="bg-blue-50 p-5 rounded-lg border border-blue-100">
+                        <h4 class="font-bold mb-3 text-lg">🤖 알고리즘 인식 과정</h4>
+                        <ol class="list-decimal list-inside space-y-3 font-medium opacity-80">
+                            <li>영상 F 업로드 (주제 다름, 좋아요 비율만 높음)</li>
+                            <li>알고리즘: "타겟 시청층이 변경되었나?" 오인</li>
+                            <li>기존 영상 A 타겟팅 재설정 시도 (혼란)</li>
+                            <li><strong>결과:</strong> 영상 A 추천 중단</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: SOLUTION & RECOVERY -->
+        <section class="bg-primary text-white rounded-2xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            <!-- Simple Decoration -->
+            <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white opacity-5 rounded-full"></div>
+            
+            <div class="relative z-10">
+                <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center">🚑 심폐소생 솔루션 실행</h2>
+                
+                <div class="flex flex-col md:flex-row justify-between items-stretch space-y-6 md:space-y-0 md:space-x-6">
+                    
+                    <!-- Step 1 -->
+                    <div class="bg-white/10 p-6 rounded-xl flex-1 text-center border border-white/10">
+                        <div class="text-4xl mb-4 text-highlight">🚫</div>
+                        <h3 class="text-xl font-bold mb-2">1. 과감한 비공개</h3>
+                        <p class="text-blue-100 opacity-80 text-sm">문제 영상 E, F 즉시 비공개.<br>아까워도 채널 보호가 우선.</p>
+                    </div>
+
+                    <div class="flex items-center justify-center text-highlight text-2xl font-bold">▶</div>
+
+                    <!-- Step 2 -->
+                    <div class="bg-white/10 p-6 rounded-xl flex-1 text-center border border-white/10">
+                        <div class="text-4xl mb-4 text-highlight">🩸</div>
+                        <h3 class="text-xl font-bold mb-2">2. 긴급 수혈</h3>
+                        <p class="text-blue-100 opacity-80 text-sm">효자 영상(A)과 <strong>결이 같은</strong><br>영상 G, H 제작 및 긴급 업로드.</p>
+                    </div>
+
+                    <div class="flex items-center justify-center text-highlight text-2xl font-bold">▶</div>
+
+                    <!-- Step 3 -->
+                    <div class="bg-white/10 p-6 rounded-xl flex-1 text-center border border-white/10">
+                        <div class="text-4xl mb-4 text-highlight">🎯</div>
+                        <h3 class="text-xl font-bold mb-2">3. 타겟 재설정</h3>
+                        <p class="text-blue-100 opacity-80 text-sm">알고리즘이 원래 시청층을<br>다시 인식하도록 유도.</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: OUTCOME -->
+        <section>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <h2 class="text-3xl font-bold border-l-8 border-highlight pl-4">📈 결과: 퍼포먼스 완전 회복</h2>
+                    <p class="text-lg font-medium leading-relaxed opacity-90">
+                        조치 후 영상 A 퍼포먼스 회복.<br>
+                        신규 업로드한 '결 맞춤' 영상(G, H)도 긍정적 신호 받으며 동반 상승.
+                    </p>
+                    <div class="p-5 bg-blue-50 rounded-lg border-l-4 border-primary">
+                        <p class="font-bold text-primary mb-1">💡 Insight</p>
+                        <p class="text-primary opacity-80 font-medium">"알고리즘은 일관성을 선호함.<br>잘 된 영상과 비슷한 영상을 주고, 다른 영상은 숨길 것."</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-shadow">
+                    <h3 class="text-center font-bold mb-4 opacity-70">조치 전후 노출 지수 변화</h3>
+                    <div class="chart-container">
+                        <canvas id="recoveryChart"></canvas>
+                    </div>
+                    <p class="text-center text-xs opacity-60 mt-2">비공개 및 결 맞춤 조치 후 급반등</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: CONCLUSION CARDS -->
+        <section class="pb-12">
+            <h2 class="text-3xl font-bold text-center mb-10">💎 떡상 채널 운영 3원칙</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Principle 1 -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden group border-t-4 border-highlight">
+                    <div class="p-8">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">🌊</div>
+                        <h3 class="text-xl font-bold mb-3">물 들어올 때 노 젓기</h3>
+                        <p class="opacity-70 text-sm font-medium">터진 영상과 <strong>같은 주제/결</strong>의 영상 제작에 올인. 딴짓 금지.</p>
+                    </div>
+                </div>
+
+                <!-- Principle 2 -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden group border-t-4 border-primary">
+                    <div class="p-8">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">🔒</div>
+                        <h3 class="text-xl font-bold mb-3">결이 다르면 숨기기</h3>
+                        <p class="opacity-70 text-sm font-medium">다른 주제는 서브 채널행. 메인 채널은 <strong>비공개 저장</strong> 후 소재 고갈 시 활용.</p>
+                    </div>
+                </div>
+
+                <!-- Principle 3 -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden group border-t-4 border-highlight">
+                    <div class="p-8">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">🚀</div>
+                        <h3 class="text-xl font-bold mb-3">주말 공격적 업로드</h3>
+                        <p class="opacity-70 text-sm font-medium">제작된 영상을 평일에 아껴뒀다가, 트래픽 몰리는 <strong>목/금/주말</strong>에 집중 투하.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-primary text-white py-8 text-center opacity-90">
+        <p class="mb-1 font-bold">Based on 스윙슈터 Insight</p>
+        <p class="text-xs opacity-60">&copy; 2025 YouTube Growth Guide</p>
+    </footer>
+
+    <!-- JavaScript for Charts -->
+    <script>
+        // --- Color Palette for JS ---
+        const colors = {
+            primary: '#1E3A8A',   // Navy
+            highlight: '#F97316', // Orange
+            primaryLight: 'rgba(30, 58, 138, 0.2)',
+            highlightLight: 'rgba(249, 115, 22, 0.2)',
+            white: '#FFFFFF'
+        };
+
+        // --- Utility Function: Label Wrapping ---
+        function wrapLabel(str, maxChars) {
+            if (str.length <= maxChars) return str;
+            const words = str.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                if (currentLine.length + 1 + words[i].length <= maxChars) {
+                    currentLine += ' ' + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        // --- Common Chart Options ---
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    backgroundColor: colors.primary,
+                    titleFont: { size: 14, family: 'Pretendard' },
+                    bodyFont: { size: 13, family: 'Pretendard' },
+                    padding: 10,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels ? item.chart.data.labels[item.dataIndex] : '';
+                            if (!label && item.raw && item.raw.label) label = item.raw.label;
+                            return Array.isArray(label) ? label.join(' ') : label;
+                        }
+                    }
+                },
+                legend: {
+                    labels: {
+                        font: { family: 'Pretendard', size: 12 },
+                        usePointStyle: true,
+                        color: colors.primary
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: colors.primary } },
+                y: { ticks: { color: colors.primary } }
+            }
+        };
+
+        // --- 1. The Crash Chart (Line) ---
+        const ctxCrash = document.getElementById('crashChart').getContext('2d');
+        const crashLabels = ['Week 1 (Peak)', '영상 E 업로드', '영상 F 업로드', '추락 시작', '최저점 (Crisis)', '솔루션 시작', '완전 회복'];
+        
+        new Chart(ctxCrash, {
+            type: 'line',
+            data: {
+                labels: crashLabels.map(l => wrapLabel(l, 10)),
+                datasets: [{
+                    label: '시간당 조회수 (Views/Hr)',
+                    data: [42000, 38000, 35000, 4000, 2000, 15000, 38000],
+                    borderColor: colors.highlight,
+                    backgroundColor: colors.highlightLight,
+                    borderWidth: 3,
+                    pointBackgroundColor: colors.white,
+                    pointBorderColor: colors.highlight,
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [5, 5] },
+                        title: { display: false }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // --- 2. Alignment Chart (Bubble) ---
+        const ctxAlignment = document.getElementById('alignmentChart').getContext('2d');
+        
+        new Chart(ctxAlignment, {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: '효자/결 맞춤 영상 (Good)',
+                    data: [
+                        { x: 90, y: 90, r: 25, label: '영상 A (효자)' },
+                        { x: 85, y: 70, r: 15, label: '영상 G (수혈)' },
+                        { x: 88, y: 80, r: 20, label: '영상 H (회복)' }
+                    ],
+                    backgroundColor: colors.primary,
+                }, {
+                    label: '결 다른 영상 (Bad)',
+                    data: [
+                        { x: 20, y: 30, r: 15, label: '영상 E (낮은 일치)' },
+                        { x: 10, y: 15, r: 15, label: '영상 F (불일치)' }
+                    ],
+                    backgroundColor: colors.highlight,
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) { return context[0].raw.label; },
+                            label: function(context) { return `일치도: ${context.raw.x}%, 성과: ${context.raw.y}`; }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: '주제 일치도' },
+                        min: 0, max: 100,
+                        grid: { display: false }
+                    },
+                    y: {
+                        title: { display: true, text: '성과 점수' },
+                        min: 0, max: 100,
+                        grid: { borderDash: [5, 5] }
+                    }
+                }
+            }
+        });
+
+        // --- 3. Recovery Chart (Bar) ---
+        const ctxRecovery = document.getElementById('recoveryChart').getContext('2d');
+        const recoveryLabels = ['위기 발생', '댓글 정리', '비공개 조치', '결 맞춤 업로드', '완전 회복'];
+
+        new Chart(ctxRecovery, {
+            type: 'bar',
+            data: {
+                labels: recoveryLabels.map(l => wrapLabel(l, 8)),
+                datasets: [{
+                    label: '노출 지수',
+                    data: [10, 30, 50, 80, 100],
+                    backgroundColor: [
+                        colors.highlight, // 위기 (Orange)
+                        colors.highlight, // 정리 중 (Orange)
+                        colors.primary,   // 조치 (Navy)
+                        colors.primary,   // 상승 (Navy)
+                        colors.primary    // 회복 (Navy)
+                    ],
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 120,
+                        grid: { display: false }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
