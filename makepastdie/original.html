@@ -1,0 +1,607 @@
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { 
+  Flame, Target, Sword, BookOpen, AlertCircle, TrendingUp, 
+  Settings, Zap, ChevronRight, MessageSquare, Monitor, 
+  Camera, MousePointer, Info, Trophy, CheckCircle2, 
+  Layers, BarChart3, Clock, Layout, ChevronDown, UserCircle2,
+  ExternalLink, Smartphone, Mouse, Search, X, Menu
+} from 'lucide-react';
+
+const App = () => {
+  const [expandedSeries, setExpandedSeries] = useState(['series1']);
+  const [activeSeries, setActiveSeries] = useState('series1');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const scrollContainerRef = useRef(null);
+
+  // 시리즈 데이터 구성
+  const seriesData = [
+    {
+      id: 'series1',
+      title: '시리즈 1: 제대로 이해하고 준비하기',
+      items: [
+        { id: 'prologue', title: '프롤로그: 처절한 성공 배경', icon: <Flame size={16} />, keywords: '반지하 절망 수익 1억 배경 동기 집필 이유 가족사 사기' },
+        { id: 'ch1', title: '1. 유튜브 전쟁 승리 기준', icon: <Target size={16} />, keywords: '승리 기준 목표 월 1억 연 3억 상위 10% 숫자 기록 방어선' },
+        { id: 'ch2', title: '2. 전쟁터의 거시적 이해', icon: <Sword size={16} />, keywords: '전쟁터 거시적 사격 기술 지형 파악 시나리오 낙오자 우크라이나 드론' },
+        { id: 'ch3', title: '3. 본질: 조회수인가 광고업인가', icon: <BarChart3 size={16} />, keywords: '본질 조회수 광고업 비즈니스 모델 창살 없는 감옥 66만 뷰 166만 뷰 광고주 유치 협찬' },
+        { id: 'ch4', title: '4. 백만뷰 8가지 실전 습관', icon: <CheckCircle2 size={16} />, keywords: '백만뷰 습관 하루 10개 시청 이탈 분석 탐색 분석 썸네일 암기 메모 시스템 업로드 기준' },
+        { id: 'ch5', title: '5. 실패 유형 및 생존 전략', icon: <AlertCircle size={16} />, keywords: '실패 유형 생존 전략 번아웃 꾸준함 기도 메타 불운 악플 카피 기술 하꼬 채널' },
+        { id: 'ch6', title: '6. 인기 영상의 80% 전략', icon: <TrendingUp size={16} />, keywords: '인기 영상 우선순위 주제 소재 제목 썸네일 미리보기 시청 지속 시간 바람잡이' },
+        { id: 'ch7', title: '7. 알고리즘 시나리오 대응', icon: <Zap size={16} />, keywords: '알고리즘 시나리오 성장 궤적 초반 대박 노출 저하 가짜 장벽 진짜 장벽 교토삼굴' },
+        { id: 'ch8', title: '8. 고효율 장비 & 기술 가이드', icon: <Settings size={16} />, keywords: '장비 기술 효율성 투자 카메라 렌즈 액션캠 마이크 노트북 데스크탑 마우스 레보메이트' },
+        { id: 'ch9', title: '9. 마케팅 감각 & 실전 팁', icon: <Layout size={16} />, keywords: '마케팅 감각 실전 팁 롱폼 쇼츠 8분 미드롤 광고 영업 제안서 포맷 네이버 쇼핑' },
+        { id: 'ch10', title: '10. 마무리 및 시리즈 2 예고', icon: <BookOpen size={16} />, keywords: '마무리 예고 시리즈 2 실전 사격 기술 진심 절세 카피 기술' },
+      ]
+    },
+    {
+      id: 'series2',
+      title: '시리즈 2: 실전 사격 기술 (예정)',
+      items: [],
+      locked: true
+    }
+  ];
+
+  // 검색 로직
+  const filteredResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    const results = [];
+    seriesData.forEach(series => {
+      if (series.locked) return;
+      series.items.forEach(item => {
+        const searchTarget = (item.title + item.keywords).toLowerCase();
+        if (searchTarget.includes(searchTerm.toLowerCase())) {
+          results.push({ ...item, seriesTitle: series.title });
+        }
+      });
+    });
+    return results;
+  }, [searchTerm]);
+
+  const toggleSeries = (id) => {
+    setExpandedSeries(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    setSearchTerm('');
+  };
+
+  const Section = ({ id, children }) => (
+    <section id={id} className="min-h-fit py-12 lg:py-20 border-b border-zinc-900 last:border-0 scroll-mt-20">
+      {children}
+    </section>
+  );
+
+  return (
+    <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden app-container">
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 z-[100] flex items-center justify-between px-6">
+        <h1 className="text-lg font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent flex items-center gap-2">
+          <TrendingUp className="text-red-500" size={20} />
+          유튜브 성공 전략
+        </h1>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-zinc-400 hover:text-white transition-colors">
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </header>
+
+      {/* Sidebar Overlay for Mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Navigation */}
+      <aside className={`fixed lg:relative inset-y-0 left-0 w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0 z-[100] transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} shadow-2xl lg:shadow-none`}>
+        <div className="hidden lg:block p-6 border-b border-zinc-800 bg-zinc-900">
+          <h1 className="text-xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent flex items-center gap-2 leading-none">
+            <TrendingUp className="text-red-500" size={22} />
+            유튜브 성공 전략
+          </h1>
+          <p className="text-[10px] text-zinc-400 mt-2 uppercase tracking-[0.2em] font-black">Professional Masterclass</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-4 bg-zinc-900/80 border-b border-zinc-800 backdrop-blur-md">
+          <div className="relative group">
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${searchTerm ? 'text-red-500' : 'text-zinc-500'}`} size={16} />
+            <input 
+              type="text" 
+              placeholder="키워드 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-2.5 pl-10 pr-10 text-sm font-normal text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <nav className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-zinc-700 bg-zinc-900">
+          {/* Search Results */}
+          {searchTerm.trim() !== '' && (
+            <div className="mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 px-2 flex justify-between">
+                검색 결과 <span>{filteredResults.length}건</span>
+              </p>
+              <div className="space-y-2">
+                {filteredResults.length > 0 ? (
+                  filteredResults.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => scrollToSection(result.id)}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left bg-red-500/10 border border-red-500/30 text-white hover:bg-red-500/20 transition-all group shadow-lg"
+                    >
+                      <span className="text-red-500 shrink-0">{result.icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-normal truncate leading-tight">{result.title}</p>
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5">{result.seriesTitle}</p>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-6 px-4 bg-zinc-800/30 rounded-2xl border border-zinc-800">
+                    <p className="text-xs text-zinc-500 font-normal italic">검색 결과가 없습니다.</p>
+                  </div>
+                )}
+                <div className="h-4 border-b border-zinc-800 mb-4"></div>
+              </div>
+            </div>
+          )}
+
+          {/* Series Menu */}
+          {seriesData.map((series) => (
+            <div key={series.id} className="space-y-1">
+              <button
+                onClick={() => !series.locked && toggleSeries(series.id)}
+                className={`w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all ${
+                  series.locked ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-800 bg-zinc-800/50 border border-zinc-800'
+                }`}
+              >
+                <span className="text-sm font-black flex items-center gap-2">
+                  <Layers size={16} className={series.id === activeSeries ? 'text-red-500' : 'text-zinc-500'} />
+                  {series.title}
+                </span>
+                {!series.locked && <ChevronDown size={14} className={`transition-transform duration-300 ${expandedSeries.includes(series.id) ? 'rotate-180' : ''}`} />}
+              </button>
+              
+              {!series.locked && expandedSeries.includes(series.id) && (
+                <div className="ml-4 pl-2 border-l border-zinc-800 space-y-1 mt-1 animate-in slide-in-from-top-2 duration-300">
+                  {series.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-zinc-300 hover:text-red-400 hover:bg-red-500/10 transition-all text-sm font-normal group"
+                    >
+                      <span className="group-hover:scale-110 transition-transform">{item.icon}</span>
+                      <span className="truncate">{item.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <main ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-zinc-950 scroll-smooth pt-16 lg:pt-0">
+        <div className="max-w-5xl mx-auto px-6 lg:px-10 pb-20">
+          
+          <div className="py-8 lg:py-12">
+            <header className="mb-12 lg:mb-16">
+              <span className="text-red-500 font-black tracking-widest text-xs lg:text-sm uppercase">Series 01</span>
+              <h1 className="text-4xl lg:text-6xl font-black mt-4 text-white tracking-tighter leading-tight lg:leading-[1.1]">
+                유튜브 성공 전략:<br className="hidden lg:block" /> 제대로 이해하고 준비하기
+              </h1>
+              <div className="text-zinc-200 text-lg lg:text-xl mt-6 leading-relaxed max-w-3xl font-normal italic border-l-4 border-red-600 pl-6 opacity-90">
+                반지하의 절망적인 환경에서 <span className="text-red-500 font-black underline underline-offset-[6px] decoration-2">월 1억 이상의 수익</span>을 달성한 유튜버의 처절하고 실용적인 승리 지침서입니다.
+              </div>
+            </header>
+
+            {/* Prologue Section */}
+            <Section id="prologue">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-[2rem] lg:rounded-[3rem] p-6 lg:p-10 shadow-2xl relative overflow-hidden">
+                <div className="relative z-10">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="p-3 bg-red-600 rounded-2xl shadow-lg shadow-red-600/20 shrink-0">
+                      <UserCircle2 className="text-white" size={32} />
+                    </div>
+                    <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight">프롤로그: 목숨을 건 성공의 시작</h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                    <div className="space-y-6">
+                      <h4 className="text-red-400 font-black text-xl lg:text-2xl tracking-tighter">저자의 배경: 분노를 오기로 바꾸다</h4>
+                      <div className="text-zinc-300 leading-relaxed font-normal text-base lg:text-lg">
+                        불우한 가정사(아버지의 외도, 어머니의 자살, 새어머니와의 동거)와 아버지에게 당한 수억원대 사기를 겪으며 반지하 생활을 시작했습니다. 
+                        낙오할 것인가, 이겨낼 것인가의 갈림길에서 <span className="text-red-400 font-black underline decoration-2 underline-offset-4">유튜브</span>를 선택했고 2년 만에 자유를 얻었습니다.
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                      <div className="p-6 bg-zinc-800 rounded-2xl lg:rounded-[2rem] text-center border border-zinc-700 shadow-xl">
+                        <p className="text-3xl lg:text-4xl font-black text-red-500 tracking-tighter leading-none">68h</p>
+                        <p className="text-[10px] text-zinc-400 font-black uppercase mt-2 tracking-widest leading-none">최장 편집 시간</p>
+                      </div>
+                      <div className="p-6 bg-zinc-800 rounded-2xl lg:rounded-[2rem] text-center border border-zinc-700 shadow-xl">
+                        <p className="text-3xl lg:text-4xl font-black text-red-500 tracking-tighter leading-none">85개</p>
+                        <p className="text-[10px] text-zinc-400 font-black uppercase mt-2 tracking-widest leading-none">도전 영상 제작</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                    {[
+                      { t: "희망 공유", c: "상처 입은 이들과 '살아보길 잘했다는 느낌'을 나누고 싶어 집필" },
+                      { t: "도전 의식", c: "독자들이 희망을 갖고 정독할 것이라는 생각에 새로운 재미와 도전 의식이 생긴다." },
+                      { t: "진심의 가치", c: "무료 정보는 집중을 끌지 못함. 진심이 느껴지는 책으로 기억되길 약속" }
+                    ].map((item, i) => (
+                      <div key={i} className="p-6 bg-zinc-950/50 rounded-2xl border border-zinc-800 shadow-inner group">
+                        <h5 className="font-black text-red-400 mb-3 text-lg group-hover:text-red-300 transition-colors">{item.t}</h5>
+                        <p className="text-sm text-zinc-400 leading-relaxed font-normal">{item.c}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* CH 1 Section */}
+            <Section id="ch1">
+              <div className="flex items-center gap-4 mb-10">
+                <Target className="text-red-500 shrink-0" size={36} />
+                <h2 className="text-3xl lg:text-4xl font-black text-white italic tracking-tighter leading-tight">1. 유튜브라는 전쟁의 승리 조건</h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+                <div className="space-y-6 lg:space-y-8">
+                  <div className="bg-zinc-900 p-8 lg:p-10 rounded-[2rem] lg:rounded-[3rem] border-l-[10px] border-red-600 shadow-2xl">
+                    <h3 className="text-2xl font-black text-white mb-8 tracking-tight">전쟁 승리의 기준 설정</h3>
+                    <div className="space-y-4 lg:space-y-6">
+                      <div className="bg-zinc-800 p-6 rounded-2xl border border-zinc-700 shadow-lg">
+                        <p className="text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase mb-1">Target Goal</p>
+                        <p className="text-3xl lg:text-4xl font-black text-white tracking-tighter leading-none">월 순수익 <span className="text-red-500 italic">1억 원</span></p>
+                      </div>
+                      <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
+                        <p className="text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase mb-1">Minimum Victory</p>
+                        <p className="text-xl lg:text-2xl font-black text-zinc-100 tracking-tight leading-none">연 <span className="text-red-400">3억 이상</span> (상위 10%)</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6 lg:p-8 bg-red-950/40 border-2 border-red-900/50 rounded-2xl lg:rounded-3xl shadow-lg">
+                    <p className="text-sm lg:text-base text-zinc-200 leading-relaxed font-normal">
+                      "유튜브는 짧은 수명의 직업이므로, 엄청난 노동량과 불확실성을 감내하려면 이 정도의 소득은 <span className="text-red-400 font-black underline decoration-2 underline-offset-4">반드시 필요</span>합니다."
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-zinc-900 p-8 lg:p-10 rounded-[2rem] lg:rounded-[3rem] border border-zinc-800 flex flex-col justify-center shadow-2xl">
+                  <h3 className="text-2xl font-black text-white mb-8 tracking-tight">숫자로 기록해야 할 핵심 2가지</h3>
+                  <div className="space-y-8 lg:space-y-10">
+                    <div className="flex gap-4 lg:gap-5 items-start">
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black shrink-0 shadow-lg text-xl">1</div>
+                      <div className="text-zinc-200 font-normal text-lg lg:text-xl leading-snug">
+                        승리 기준과 승리하고 싶은 이유를 <span className="text-red-400 font-black underline underline-offset-4">구체적 숫자</span>로 명기할 것
+                      </div>
+                    </div>
+                    <div className="flex gap-4 lg:gap-5 items-start">
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black shrink-0 shadow-lg text-xl">2</div>
+                      <div className="text-zinc-200 font-normal text-lg lg:text-xl leading-snug">
+                        최후 방어선 설정: 예) <span className="text-red-400 bg-red-500/10 px-2 rounded-lg font-black italic">한 달마다 영상 30개씩 6달</span> 동안 만든 후 판단
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* CH 3 Section */}
+            <Section id="ch3">
+              <div className="flex items-center gap-4 mb-10">
+                <BarChart3 className="text-blue-500 shrink-0" size={36} />
+                <h2 className="text-3xl lg:text-4xl font-black text-white italic tracking-tighter leading-tight">3. 본질: 조회수인가 광고업인가</h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-8 lg:mb-10">
+                <div className="bg-zinc-900 p-8 lg:p-10 rounded-[2rem] lg:rounded-[3rem] border border-zinc-800 space-y-8 shadow-2xl relative overflow-hidden">
+                  <h3 className="text-2xl font-black text-white flex items-center gap-3">
+                    <AlertCircle className="text-red-500" size={24} /> 조회수 수익 모델의 명확한 한계
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-zinc-300 font-normal text-xl">월 1억 달성 필요 조회수</span>
+                      <span className="text-4xl lg:text-5xl font-black text-red-500 tracking-tighter">최대 5천만 뷰</span>
+                    </div>
+                    <div className="h-4 lg:h-6 bg-zinc-800 rounded-full overflow-hidden border-2 border-zinc-700 shadow-inner relative">
+                      <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 w-[95%] shadow-[0_0_20px_rgba(239,68,68,0.7)]"></div>
+                    </div>
+                    <ul className="text-lg lg:text-xl text-zinc-300 space-y-4 pt-2 font-normal">
+                      <li className="flex gap-3">
+                        <span className="text-red-500 mt-1">•</span> 
+                        <div className="leading-tight">1일 1업로드 시 영상당 <span className="text-red-400 font-black underline decoration-2 underline-offset-4">66만~166만 뷰</span> 고정 필수</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="text-red-500 mt-1">•</span> 
+                        <div className="leading-tight">체력의 한계와 원하는 삶이 없는 <span className="text-red-500 font-black bg-red-500/10 px-2 py-0.5 rounded-lg border border-red-500/20">'창살 없는 감옥'</span> 모델</div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-900/60 to-zinc-900 p-8 lg:p-10 rounded-[2rem] lg:rounded-[3rem] border-2 border-blue-900/50 space-y-8 shadow-2xl relative group overflow-hidden">
+                  <h3 className="text-2xl font-black text-white flex items-center gap-3 relative z-10">
+                    <Trophy className="text-yellow-500" size={24} /> 광고업 모델로의 전환 (WINNER)
+                  </h3>
+                  <div className="text-zinc-200 leading-relaxed font-normal text-lg lg:text-xl relative z-10 tracking-tight">
+                    단순 조회수가 아닌 <span className="text-blue-300 font-black underline underline-offset-[12px] decoration-4 decoration-blue-400/80 italic">"광고주가 매달리고 싶은 채널"</span>에 집중하십시오. 
+                    구독자 1,000명 미만이라도 '광고를 해야 할 이유'를 명확히 제시하면 수익 창출 이전에도 협찬이 가능합니다.
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 lg:gap-6 relative z-10">
+                    <div className="bg-zinc-950/80 p-5 rounded-2xl border border-zinc-800 text-center shadow-xl">
+                      <p className="text-2xl lg:text-3xl font-black text-blue-400 tracking-tighter leading-none">$4.4K~10K</p>
+                      <p className="text-[10px] text-zinc-400 uppercase mt-2 font-black tracking-widest leading-none italic">Per Video Ad</p>
+                    </div>
+                    <div className="bg-zinc-950/80 p-5 rounded-2xl border border-zinc-800 text-center shadow-xl">
+                      <p className="text-2xl lg:text-3xl font-black text-blue-400 tracking-tighter leading-none">Global Ads</p>
+                      <p className="text-[10px] text-zinc-400 uppercase mt-2 font-black tracking-widest leading-none italic">Expansion</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-zinc-900 p-6 lg:p-8 rounded-[1.5rem] border border-zinc-800 shadow-xl relative overflow-hidden text-center">
+                <div className="absolute left-0 top-0 bottom-0 w-2 lg:w-3 bg-red-600 rounded-l-[1.5rem]"></div>
+                <div className="text-zinc-200 text-lg lg:text-xl font-normal leading-relaxed">
+                  핵심 명제: 높은 조회수는 최종 수익이 아니라, <span className="text-red-500 font-black bg-red-500/10 px-3 py-1 rounded-xl border-2 border-red-500/30">"더 비싼 광고를 더 자주 받기 위한 수단"</span>입니다.
+                </div>
+              </div>
+            </Section>
+
+            {/* CH 6 Section (Visual Hierarchy Highlight) */}
+            <Section id="ch6">
+              <div className="flex items-center gap-4 mb-10">
+                <TrendingUp className="text-red-500 shrink-0" size={36} />
+                <h2 className="text-3xl lg:text-4xl font-black text-white italic tracking-tighter leading-none">6. 인기 영상의 특징과 80% 전략</h2>
+              </div>
+              <div className="flex flex-col items-center py-8">
+                <div className="w-full max-w-2xl bg-zinc-900 p-8 lg:p-14 rounded-[3rem] lg:rounded-[5rem] border-2 border-zinc-800 shadow-[0_40px_100px_rgba(0,0,0,0.6)] overflow-hidden relative group">
+                  <div className="space-y-8 lg:space-y-10 relative z-10">
+                    {/* Priority 1: Subject (Red) */}
+                    <div className="text-center group cursor-default">
+                      <div className="bg-gradient-to-r from-red-600 to-red-800 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl border-2 border-red-400/20 transform hover:scale-[1.03] transition-all duration-500">
+                        <p className="text-[10px] font-black text-red-100 uppercase tracking-[0.6em] mb-4">Mastery Priority #1</p>
+                        <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tighter italic leading-none">주제 (소재)</h3>
+                        <div className="mt-6">
+                           <div className="text-red-600 bg-white px-6 py-2 rounded-full text-lg lg:text-xl font-black inline-block shadow-2xl">소재는 모든 것을 압도합니다.</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center"><ChevronDown className="text-zinc-700 animate-bounce" size={40} /></div>
+                    
+                    {/* Priority 2: Thumbnail (Blue) */}
+                    <div className="text-center group cursor-default">
+                      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 lg:p-8 rounded-[2rem] shadow-2xl border-2 border-blue-400/20 transform hover:scale-[1.03] transition-all duration-500">
+                        <p className="text-[10px] font-black text-blue-100 uppercase tracking-[0.6em] mb-4">Execution Priority #2</p>
+                        <h3 className="text-3xl lg:text-4xl font-black text-white tracking-tighter italic leading-none">제목 + 썸네일 + 미리보기</h3>
+                        <div className="text-blue-100 mt-5 text-xl lg:text-2xl font-black tracking-tight italic">성공의 <span className="underline underline-offset-8 decoration-4 decoration-blue-300/60">80%를 결정</span>하는 승부처</div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center"><ChevronDown className="text-zinc-700" size={32} /></div>
+                    
+                    {/* Priority 3: Content (Emerald) */}
+                    <div className="text-center group cursor-default">
+                      <div className="bg-gradient-to-r from-emerald-600 to-emerald-900 p-5 lg:p-6 rounded-[1.5rem] shadow-2xl border-2 border-emerald-400/20 transform hover:scale-[1.03] transition-all duration-500 opacity-90">
+                        <p className="text-[10px] font-black text-emerald-100 uppercase tracking-[0.6em] mb-4">Retention Priority #3</p>
+                        <h3 className="text-2xl lg:text-3xl font-black text-white tracking-tighter italic leading-none">영상 내용</h3>
+                        <div className="text-emerald-100 mt-2 text-lg lg:text-xl font-black italic opacity-90 italic">클릭 유도 이후의 최종 단계</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+                <div className="bg-zinc-900 p-8 lg:p-10 rounded-[2.5rem] border border-zinc-800 shadow-2xl relative group">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-24 bg-red-600 rounded-r-full"></div>
+                  <h4 className="font-black text-white mb-8 flex items-center gap-4 text-2xl lg:text-3xl italic tracking-tighter"><Clock size={32} className="text-red-500"/> 시청 지속 시간 구조</h4>
+                  <div className="space-y-5 text-base lg:text-lg text-zinc-300 font-normal">
+                    <div className="flex gap-5 p-5 lg:p-6 bg-zinc-800/80 rounded-[2rem] border border-zinc-700 shadow-2xl">
+                      <span className="font-black text-red-500 shrink-0 text-2xl italic leading-none">0:30</span>
+                      <div className="leading-snug">초강력 흥미 오프닝 + 핵심 소재의 등장을 극대화하는 <span className="text-red-400 font-black italic underline decoration-2 underline-offset-4">'바람잡이'</span> 역할</div>
+                    </div>
+                    <div className="flex gap-5 p-5 lg:p-6 bg-zinc-800/80 rounded-[2rem] border border-zinc-700 shadow-2xl">
+                      <span className="font-black text-blue-500 shrink-0 text-2xl italic leading-none">END</span>
+                      <div className="leading-snug">핵심 가치를 후반 배치하여 시청자가 <span className="text-blue-400 font-black italic underline decoration-2 underline-offset-4">주인공</span>을 기다리게 유도</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-zinc-900 p-8 lg:p-10 rounded-[2.5rem] border border-zinc-800 shadow-2xl relative group">
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-24 bg-orange-600 rounded-l-full"></div>
+                  <h4 className="font-black text-white mb-8 flex items-center gap-4 text-2xl lg:text-3xl italic tracking-tighter"><Layers size={32} className="text-orange-500"/> 인기 주제 Top 5</h4>
+                  <div className="grid grid-cols-1 gap-3 text-base lg:text-lg font-normal text-zinc-200">
+                    {[
+                      { id: 1, text: "시간 때우기 최적 (여행/코미디/영화)", color: "text-yellow-500" },
+                      { id: 2, text: "실시간 트래픽 (연예/정치/이슈)", color: "text-red-500" },
+                      { id: 3, text: "지적 호기심 충족 (역사/미스테리)", color: "text-blue-500" },
+                      { id: 4, text: "실용적 라이프 (투자/건강/언박싱)", color: "text-emerald-500" },
+                      { id: 5, text: "여성 시청자 타겟 VLOG", color: "text-pink-500" }
+                    ].map(topic => (
+                      <div key={topic.id} className="p-4 bg-zinc-800/80 rounded-2xl flex justify-between items-center border border-zinc-700 shadow-xl group/item hover:bg-zinc-700 transition-colors">
+                        <span className="tracking-tight">{topic.id}. {topic.text}</span>
+                        <Zap size={18} className={`${topic.color} group-hover/item:scale-125 transition-transform`} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* CH 8 Section */}
+            <Section id="ch8">
+              <div className="flex items-center gap-4 mb-10">
+                <Settings className="text-zinc-300 shrink-0" size={36} />
+                <h2 className="text-3xl lg:text-4xl font-black text-white italic tracking-tighter leading-none">8. 초보자를 위한 고효율 장비 가이드</h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+                <div className="lg:col-span-1 space-y-8">
+                  <div className="bg-emerald-950/50 border-2 border-emerald-900/60 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+                    <h4 className="font-black text-emerald-400 flex items-center gap-4 mb-6 text-2xl tracking-tighter italic leading-none"><Zap size={24}/> 기술 습득 투자</h4>
+                    <div className="text-lg text-zinc-300 leading-relaxed font-normal">
+                      주 1회는 편집을 더 빠르고 쉽게 할 <span className="text-emerald-400 font-black underline decoration-2 underline-offset-8">업무 자동화/AI 기술</span>을 배우는 데 투자하십시오. 
+                      돈을 주고서라도 익히는 것이 진짜 꾸준함입니다.
+                    </div>
+                  </div>
+                  <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] shadow-2xl relative group">
+                    <h4 className="font-black text-white flex items-center gap-4 mb-8 text-2xl tracking-tighter italic leading-none"><Mouse size={32} className="text-zinc-400 group-hover:text-red-500 transition-colors"/> 편집 보조 장치</h4>
+                    <div className="space-y-4">
+                      <div className="p-5 bg-zinc-800 rounded-2xl border border-zinc-700 shadow-lg group-hover:border-zinc-500 transition-all">
+                        <p className="text-lg font-black text-zinc-100">G502 X / HERO 마우스</p>
+                        <p className="text-[10px] text-zinc-400 mt-2 uppercase font-normal tracking-[0.2em]">Function Keys & Comfort</p>
+                      </div>
+                      <div className="p-5 bg-zinc-800 rounded-2xl border-2 border-red-500/50 shadow-2xl relative overflow-hidden transform hover:scale-105 transition-all active:scale-95 cursor-pointer">
+                        <p className="text-lg font-black text-zinc-100 relative z-10">레보메이트 REV-O-MATE</p>
+                        <p className="text-[10px] text-red-400 mt-2 uppercase font-black tracking-[0.2em] relative z-10 italic">Speed Up Editing</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 p-8 lg:p-10 rounded-[2.5rem] lg:rounded-[3.5rem] relative overflow-hidden shadow-2xl border-t-[10px] border-t-red-600">
+                  <h4 className="text-3xl lg:text-4xl font-black text-white mb-10 flex items-center gap-4 tracking-tighter italic leading-none"><Camera className="text-red-500" size={40}/> 실전 장비 풀세트 리스트</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-12">
+                    <div className="space-y-10">
+                      <div>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-6 border-b border-zinc-800 pb-3">Optics & Recording</p>
+                        <div className="text-lg lg:text-xl text-zinc-300 space-y-5 font-normal italic">
+                          <div className="flex items-center gap-4"><div className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.8)]"></div> <span className="text-red-400 font-black underline decoration-2 underline-offset-4">소니 A6400</span> (트래킹 독보적)</div>
+                          <div className="flex items-center gap-4"><div className="w-2.5 h-2.5 rounded-full bg-red-600"></div> <span className="text-red-400 font-black underline decoration-2 underline-offset-4">오즈모액션5 / 인스타 고3S</span></div>
+                          <div className="flex items-center gap-4"><div className="w-2.5 h-2.5 rounded-full bg-red-600"></div> <span className="text-red-400 font-black underline decoration-2 underline-offset-4">Z플립6</span> (모니터링 강점)</div>
+                          <div className="flex items-center gap-4"><div className="w-2.5 h-2.5 rounded-full bg-zinc-600 shadow-inner"></div> 울란지 MT-44 전천후 삼각대</div>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-6 border-b border-zinc-800 pb-3">Professional Sound</p>
+                        <div className="text-lg lg:text-xl text-zinc-300 font-normal flex items-center gap-4 italic"><div className="w-2.5 h-2.5 rounded-full bg-red-600"></div> <span className="text-red-400 font-black underline decoration-2 underline-offset-4">DJI MIC MINI</span> (경량화가 무기)</div>
+                      </div>
+                    </div>
+                    <div className="space-y-8">
+                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-6 border-b border-zinc-800 pb-3">Ultimate Workstation</p>
+                      <div className="text-lg text-zinc-200 space-y-6">
+                        <div className="p-6 bg-zinc-800 rounded-3xl border border-zinc-700 shadow-2xl transform hover:-translate-y-2 transition-all cursor-pointer group/card">
+                          <span className="font-black block text-blue-400 mb-2 text-xl italic tracking-tighter leading-none">Zenbook Duo 2024</span>
+                          <span className="text-zinc-400 font-normal">세컨 스크린 노트북 광팬 (대본 작성 최적화)</span>
+                        </div>
+                        <div className="p-6 bg-zinc-800 rounded-3xl border border-zinc-700 shadow-2xl transform hover:-translate-y-2 transition-all cursor-pointer group/card">
+                          <span className="font-black block text-blue-400 mb-2 text-xl italic tracking-tighter leading-none">High-End Desktop</span>
+                          <span className="text-zinc-400 font-normal">라이젠 5900X / 32GB RAM / RTX 3060</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* CH 10 Section (Immersive Ending) */}
+            <Section id="ch10">
+              <div className="bg-gradient-to-b from-zinc-900 to-black p-10 lg:p-24 rounded-[3rem] lg:rounded-[6rem] border-2 border-zinc-800 text-center shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
+                <div className="relative z-10">
+                  <h2 className="text-5xl lg:text-8xl font-black mb-12 text-white tracking-tighter italic drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)] leading-none uppercase">Beyond Series 1</h2>
+                  <div className="text-2xl lg:text-4xl text-zinc-200 max-w-5xl mx-auto leading-[1.3] mb-16 lg:mb-20 font-normal tracking-tight">
+                    이제 유튜브라는 전쟁터의 지형을 완벽히 읽었습니다. <br className="hidden lg:block" />
+                    <div className="text-red-500 text-4xl lg:text-6xl font-black underline underline-offset-[20px] decoration-8 decoration-red-600/40 italic tracking-tighter block mt-8 animate-pulse">절대 포기하지 마십시오.</div>
+                    <div className="text-zinc-400 mt-12 lg:mt-20 block text-xl lg:text-3xl font-normal italic tracking-widest leading-relaxed">
+                      시리즈 2에서는 당신의 조회수를 폭발시킬 <br className="hidden lg:block" />
+                      <span className="text-zinc-100 font-black">'실전 사격 기술'</span>이 본격적으로 펼쳐집니다.
+                    </div>
+                  </div>
+                  
+                  <div className="inline-block px-12 py-6 lg:px-20 lg:py-10 bg-red-600 hover:bg-red-500 text-white rounded-[2.5rem] lg:rounded-[4rem] font-black text-2xl lg:text-5xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer shadow-[0_25px_80px_rgba(239,68,68,0.7)] group-hover:shadow-[0_25px_100px_rgba(239,68,68,0.9)] relative z-20">
+                    SERIES 2: NEXT LEVEL
+                  </div>
+
+                  <div className="mt-24 lg:mt-40 border-t-2 border-zinc-800 pt-16">
+                    <h5 className="text-sm lg:text-xl font-black text-zinc-500 uppercase tracking-[0.5em] mb-12 lg:mb-20 italic underline decoration-4 underline-offset-8 decoration-zinc-800">Series 2 Syllabus Sneak Peek</h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-10 text-xs lg:text-sm text-zinc-400 font-normal italic leading-relaxed">
+                      {[
+                         "월 천 이상 광고 영업 노하우",
+                         "백만뷰 실전 / 고급 사격 기술",
+                         "알고리즘 가두기 전략",
+                         "수익 정지 및 위기 상황 해결",
+                         "초간편 고효율 편집 기법"
+                      ].map((topic, i) => (
+                        <div key={i} className="p-6 lg:p-8 bg-zinc-900/80 rounded-3xl border border-zinc-800 shadow-2xl hover:border-red-500/50 transform hover:-translate-y-2 transition-all">
+                          <p className="leading-snug">{topic}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Visual Effects */}
+                <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-red-600/10 blur-[250px] -mr-[30%] -mt-[30%] group-hover:bg-red-600/20 transition-all duration-[3000ms]"></div>
+                <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-blue-600/10 blur-[250px] -ml-[25%] -mb-[25%] group-hover:bg-blue-600/20 transition-all duration-[3000ms]"></div>
+              </div>
+            </Section>
+
+          </div>
+        </div>
+      </main>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @font-face {
+          font-family: 'NanumSquareNeo';
+          src: url('https://hangeul.naver.com/static/fonts/nanum/NanumSquareNeo/NanumSquareNeo-Variable.woff2') format('woff2');
+          font-weight: normal;
+          font-style: normal;
+        }
+
+        .app-container, body, button, input, textarea {
+          font-family: 'NanumSquareNeo', sans-serif !important;
+          letter-spacing: -0.04em;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 8px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #3f3f46;
+          border-radius: 20px;
+          border: 2px solid #09090b;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #52525b;
+        }
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-15px); }
+        }
+        .animate-bounce {
+          animation: bounce-slow 2.5s ease-in-out infinite;
+        }
+        .animate-pulse-subtle {
+          animation: pulse-s 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-s {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
+        }
+        ::selection {
+          background: #dc2626;
+          color: white;
+        }
+      `}} />
+    </div>
+  );
+};
+
+export default App;
