@@ -170,6 +170,25 @@
           </div>
         </div>
 
+        ${!searchTerm && html`
+          <div className="px-4 py-3 flex gap-2 border-b border-zinc-800 bg-zinc-900/95 backdrop-blur-md sticky top-[76px] z-10 transition-all">
+            <button
+              onClick=${() => setExpandedSeries(seriesData.map(s => s.id))}
+              className="flex-1 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 hover:text-white transition-colors flex items-center justify-center gap-1.5 border border-zinc-700/50 hover:border-zinc-600 shadow-sm"
+            >
+              <${LucideIcon} name="ChevronsDown" size=${14} />
+              모두 펼치기
+            </button>
+            <button
+              onClick=${() => setExpandedSeries([])}
+              className="flex-1 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 hover:text-white transition-colors flex items-center justify-center gap-1.5 border border-zinc-700/50 hover:border-zinc-600 shadow-sm"
+            >
+              <${LucideIcon} name="ChevronsUp" size=${14} />
+              모두 접기
+            </button>
+          </div>
+        `}
+
         <nav className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
           ${searchTerm.trim() !== '' ? html`
             <div className="animate-fadeIn">
